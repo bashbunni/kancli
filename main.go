@@ -56,11 +56,13 @@ func (m *model) syncTasks() {
 		}
 	}
 	m.todos.SetItems(todos)
+	m.todos.Title = "To Do"
 	m.inProgress.SetItems(inProgressItems)
+	m.inProgress.Title = "In Progress"
 	m.done.SetItems(doneItems)
+	m.done.Title = "Done"
 }
 
-// TODO: organize by Task status
 func initialModel() model {
 	m := model{state: todo}
 	m.tasks = []Task{
@@ -70,7 +72,7 @@ func initialModel() model {
 		{status: inProgress, description: "write code"},
 		{status: done, description: "stay cool"},
 	}
-	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), 10, 10)
+	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 40)
 	m.todos = defaultList
 	m.inProgress = defaultList
 	m.done = defaultList
@@ -84,29 +86,44 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		if key.Matches(msg, constants.QuitKeys) {
 			m.quitting = true
 			return m, tea.Quit
 		}
-		return m, nil
+		if msg.String() == "n" {
+			m.state = inProgress
+			return m, nil
+		}
+		if msg.String() == "t" {
+			m.state = todo
+			return m, nil
+		}
+		if msg.String() == "d" {
+			m.state = done
+			return m, nil
+		}
 	case constants.ErrMsg:
 		m.err = msg
-		return m, nil
-	default:
-		var cmd tea.Cmd
-		// do nothing
-		return m, cmd
 	}
+	switch m.state {
+		case inProgress:
+			m.todos, cmd = m.todos.Update(msg)
+		case done:
+			m.todos, cmd = m.todos.Update(msg)
+		default:
+			m.todos, cmd = m.todos.Update(msg)
+	}
+	return m, cmd
 }
 
 func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, m.done.View(), m.inProgress.View(), m.done.View())
+	return lipgloss.JoinHorizontal(lipgloss.Left, m.todos.View(), m.inProgress.View(), m.done.View())
 }
 
 func main() {
