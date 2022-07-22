@@ -23,14 +23,11 @@ const (
 )
 
 type model struct {
-	state      status
-	tasks      []Task
-	lists      []list.Model
-	todos      list.Model
-	inProgress list.Model
-	done       list.Model
-	quitting   bool
-	err        error
+	state    status
+	tasks    []Task
+	lists    []list.Model
+	quitting bool
+	err      error
 }
 
 type Task struct {
@@ -51,7 +48,37 @@ func (t Task) Description() string {
 	return t.description
 }
 
-func (t Task) Next() {}
+func (t *Task) Next() {
+	if t.status == done {
+		t.status = todo
+	} else {
+		t.status++
+	}
+}
+
+func (t *Task) Prev() {
+	if t.status == todo {
+		t.status = done
+	} else {
+		t.status--
+	}
+}
+
+func (m *model) Next() {
+	if m.state == done {
+		m.state = todo
+	} else {
+		m.state++
+	}
+}
+
+func (m *model) Prev() {
+	if m.state == todo {
+		m.state = done
+	} else {
+		m.state--
+	}
+}
 
 func (m *model) syncTasks() {
 	todos := []list.Item{}
@@ -67,12 +94,12 @@ func (m *model) syncTasks() {
 			todos = append(todos, task)
 		}
 	}
-	m.todos.SetItems(todos)
-	m.todos.Title = "To Do"
-	m.inProgress.SetItems(inProgressItems)
-	m.inProgress.Title = "In Progress"
-	m.done.SetItems(doneItems)
-	m.done.Title = "Done"
+	m.lists[todo].SetItems(todos)
+	m.lists[todo].Title = "To Do"
+	m.lists[inProgress].SetItems(inProgressItems)
+	m.lists[inProgress].Title = "In Progress"
+	m.lists[done].SetItems(doneItems)
+	m.lists[done].Title = "Done"
 }
 
 func initialModel() model {
@@ -85,11 +112,9 @@ func initialModel() model {
 		{status: done, title: "stay cool", description: "as a cucumber"},
 	}
 	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 40)
-	m.todos = defaultList
-	m.inProgress = defaultList
-	m.done = defaultList
+	m.lists = []list.Model{defaultList, defaultList, defaultList}
 	m.syncTasks()
-	log.Print(m.todos.Items())
+	log.Print(m.lists[todo].Items())
 	return m
 }
 
@@ -105,29 +130,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		}
-		if msg.String() == "n" {
-			m.state = inProgress
-			return m, nil
-		}
-		if msg.String() == "t" {
-			m.state = todo
-			return m, nil
-		}
-		if msg.String() == "d" {
-			m.state = done
-			return m, nil
+		switch msg.String() {
+		case "right":
+			m.Next()
+		case "left":
+			m.Prev()
 		}
 	case constants.ErrMsg:
 		m.err = msg
 	}
-	switch m.state {
-	case inProgress:
-		m.todos, cmd = m.todos.Update(msg)
-	case done:
-		m.todos, cmd = m.todos.Update(msg)
-	default:
-		m.todos, cmd = m.todos.Update(msg)
-	}
+
+	currList, cmd := m.lists[m.state].Update(msg)
+	m.lists[m.state] = currList
 	return m, cmd
 }
 
@@ -138,14 +152,14 @@ func (m model) View() string {
 	/*
 		switch m.state {
 		case todo:
-			return m.todos.View()
+			return m.lists[todo].View()
 		case inProgress:
-			return m.inProgress.View()
+			return m.lists[inProgress].View()
 		case done:
-			return m.done.View()
+			return m.lists[done].View()
 		}
 	*/
-	return lipgloss.JoinHorizontal(lipgloss.Left, m.todos.View(), m.inProgress.View(), m.done.View())
+	return lipgloss.JoinHorizontal(lipgloss.Left, m.lists[todo].View(), m.lists[inProgress].View(), m.lists[done].View())
 }
 
 func main() {
