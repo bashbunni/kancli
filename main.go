@@ -25,6 +25,7 @@ const (
 type model struct {
 	state      status
 	tasks      []Task
+	lists      []list.Model
 	todos      list.Model
 	inProgress list.Model
 	done       list.Model
@@ -34,12 +35,23 @@ type model struct {
 
 type Task struct {
 	status      status
+	title       string
 	description string
 }
 
 func (t Task) FilterValue() string {
+	return t.title
+}
+
+func (t Task) Title() string {
+	return t.title
+}
+
+func (t Task) Description() string {
 	return t.description
 }
+
+func (t Task) Next() {}
 
 func (m *model) syncTasks() {
 	todos := []list.Item{}
@@ -66,11 +78,11 @@ func (m *model) syncTasks() {
 func initialModel() model {
 	m := model{state: todo}
 	m.tasks = []Task{
-		{status: todo, description: "buy milk"},
-		{status: todo, description: "eat sushi"},
-		{status: todo, description: "fold laundry"},
-		{status: inProgress, description: "write code"},
-		{status: done, description: "stay cool"},
+		{status: todo, title: "buy milk", description: "strawberry milk"},
+		{status: todo, title: "eat sushi", description: "negitoro roll, miso soup, rice"},
+		{status: todo, title: "fold laundry", description: "or wear wrinkly t-shirts"},
+		{status: inProgress, title: "write code", description: "don't worry, it's go"},
+		{status: done, title: "stay cool", description: "as a cucumber"},
 	}
 	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), 40, 40)
 	m.todos = defaultList
@@ -109,12 +121,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 	}
 	switch m.state {
-		case inProgress:
-			m.todos, cmd = m.todos.Update(msg)
-		case done:
-			m.todos, cmd = m.todos.Update(msg)
-		default:
-			m.todos, cmd = m.todos.Update(msg)
+	case inProgress:
+		m.todos, cmd = m.todos.Update(msg)
+	case done:
+		m.todos, cmd = m.todos.Update(msg)
+	default:
+		m.todos, cmd = m.todos.Update(msg)
 	}
 	return m, cmd
 }
@@ -123,6 +135,16 @@ func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	}
+	/*
+		switch m.state {
+		case todo:
+			return m.todos.View()
+		case inProgress:
+			return m.inProgress.View()
+		case done:
+			return m.done.View()
+		}
+	*/
 	return lipgloss.JoinHorizontal(lipgloss.Left, m.todos.View(), m.inProgress.View(), m.done.View())
 }
 
