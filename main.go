@@ -1,5 +1,17 @@
 package main
 
+/*
+Qs
+- don't need to store list of Items and data structure - should be able to wrap each of them when necessary
+- cast it as type, modify it, sub it back in as interface
+*/
+
+/* functionality
+- add tasks to current list
+- edit selected task
+- move selected task to next board
+*/
+
 import (
 	"fmt"
 	"log"
@@ -13,7 +25,8 @@ import (
 )
 
 type (
-	status uint
+	status       uint
+	MovedTaskMsg bool
 )
 
 const (
@@ -37,44 +50,9 @@ var (
 type model struct {
 	state    status
 	loaded   bool
-	tasks    []Task
 	lists    []list.Model
 	quitting bool
 	err      error
-}
-
-type Task struct {
-	status      status
-	title       string
-	description string
-}
-
-func (t Task) FilterValue() string {
-	return t.title
-}
-
-func (t Task) Title() string {
-	return t.title
-}
-
-func (t Task) Description() string {
-	return t.description
-}
-
-func (t *Task) Next() {
-	if t.status == done {
-		t.status = todo
-	} else {
-		t.status++
-	}
-}
-
-func (t *Task) Prev() {
-	if t.status == todo {
-		t.status = done
-	} else {
-		t.status--
-	}
 }
 
 func (m *model) Next() {
@@ -93,45 +71,28 @@ func (m *model) Prev() {
 	}
 }
 
-func (m *model) syncTasks() {
-	todos := []list.Item{}
-	inProgressItems := []list.Item{}
-	doneItems := []list.Item{}
-	for _, task := range m.tasks {
-		switch task.status {
-		case inProgress:
-			inProgressItems = append(inProgressItems, task)
-		case done:
-			doneItems = append(doneItems, task)
-		default:
-			todos = append(todos, task)
-		}
-	}
-	m.lists[todo].SetItems(todos)
-	m.lists[todo].Title = "To Do"
-	m.lists[inProgress].SetItems(inProgressItems)
-	m.lists[inProgress].Title = "In Progress"
-	m.lists[done].SetItems(doneItems)
-	m.lists[done].Title = "Done"
-}
-
 func initialModel() model {
 	m := model{state: todo, loaded: false}
-	m.tasks = []Task{
-		{status: todo, title: "buy milk", description: "strawberry milk"},
-		{status: todo, title: "eat sushi", description: "negitoro roll, miso soup, rice"},
-		{status: todo, title: "fold laundry", description: "or wear wrinkly t-shirts"},
-		{status: inProgress, title: "write code", description: "don't worry, it's go"},
-		{status: done, title: "stay cool", description: "as a cucumber"},
-	}
 	return m
 }
 
 func (m *model) initLists(width, height int) {
+	// init list model
 	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height/divisor)
 	defaultList.SetShowHelp(false)
 	m.lists = []list.Model{defaultList, defaultList, defaultList}
-	m.syncTasks()
+	// add list items
+	m.lists[todo].SetItems([]list.Item{
+		Task{status: todo, title: "buy milk", description: "strawberry milk"},
+		Task{status: todo, title: "eat sushi", description: "negitoro roll, miso soup, rice"},
+		Task{status: todo, title: "fold laundry", description: "or wear wrinkly t-shirts"},
+	})
+	m.lists[inProgress].SetItems([]list.Item{
+		Task{status: inProgress, title: "write code", description: "don't worry, it's go"},
+	})
+	m.lists[done].SetItems([]list.Item{
+		Task{status: done, title: "stay cool", description: "as a cucumber"},
+	})
 }
 
 func (m model) Init() tea.Cmd {
@@ -158,6 +119,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Next()
 		case "left":
 			m.Prev()
+		case "enter":
+			return m, m.MoveToNext
 		}
 	case constants.ErrMsg:
 		m.err = msg
@@ -165,6 +128,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	currList, cmd := m.lists[m.state].Update(msg)
 	m.lists[m.state] = currList
 	return m, cmd
+}
+
+func (m *model) MoveToNext() tea.Msg {
+	selectedItem := m.lists[m.state].SelectedItem()
+	selectedTask := selectedItem.(Task)
+	m.lists[selectedTask.status].RemoveItem(m.lists[m.state].Index())
+	selectedTask.Next()
+	m.lists[selectedTask.status].InsertItem(len(m.lists[selectedTask.status].Items())-1, list.Item(selectedTask))
+	return nil
 }
 
 func (m model) View() string {
