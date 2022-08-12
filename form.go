@@ -75,6 +75,6 @@ func (m form) helpMenu() string {
 }
 
 func (m form) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, m.title.View(), m.description.View(), )
+	return lipgloss.JoinVertical(lipgloss.Left, m.title.View(), m.description.View(), m.helpMenu())
 }
 
