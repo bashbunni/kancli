@@ -1,4 +1,4 @@
-module github.com/charmbracelet/bubbletea-app-template
+module github.com/bashbunni/kancli
 
 go 1.18
 

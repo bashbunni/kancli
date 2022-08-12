@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
+	"github.com/bashbunni/kancli/constants"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/bubbletea-app-template/constants"
 	"github.com/charmbracelet/lipgloss"
 )
 

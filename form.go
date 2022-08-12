@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/bubbletea-app-template/constants"
+	"github.com/bashbunni/kancli/constants"
 	"github.com/charmbracelet/lipgloss"
 )
 
