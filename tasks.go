@@ -50,12 +50,15 @@ func (m *model) initLists(width, height int) {
 		Task{status: todo, title: "eat sushi", description: "negitoro roll, miso soup, rice"},
 		Task{status: todo, title: "fold laundry", description: "or wear wrinkly t-shirts"},
 	})
+	m.lists[todo].Title = "To Do"
 	m.lists[inProgress].SetItems([]list.Item{
 		Task{status: inProgress, title: "write code", description: "don't worry, it's go"},
 	})
+	m.lists[inProgress].Title = "In Progress"
 	m.lists[done].SetItems([]list.Item{
 		Task{status: done, title: "stay cool", description: "as a cucumber"},
 	})
+	m.lists[done].Title = "Done"
 }
 
 func (m model) Init() tea.Cmd {
