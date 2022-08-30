@@ -13,7 +13,6 @@ Qs
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -43,8 +42,8 @@ const (
 var (
 	models      []tea.Model
 	columnStyle = lipgloss.NewStyle().
-			Padding(1, 2)
-
+			Padding(1, 2).
+			Border(lipgloss.HiddenBorder())
 	focusedStyle = lipgloss.NewStyle().
 			Padding(1, 2).
 			Border(lipgloss.RoundedBorder()).
@@ -54,18 +53,6 @@ var (
 )
 
 func main() {
-	if f, err := tea.LogToFile("debug.log", "help"); err != nil {
-		fmt.Println("Couldn't open a file for logging:", err)
-		os.Exit(1)
-	} else {
-		defer func() {
-			err = f.Close()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}()
-	}
-	// initialize models
 	models = []tea.Model{newModel(), newForm(todo)}
 
 	p := tea.NewProgram(models[tasks])

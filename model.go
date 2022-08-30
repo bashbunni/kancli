@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type model struct {
+type Model struct {
 	focus    status
 	loaded   bool
 	lists    []list.Model
@@ -18,7 +18,7 @@ type model struct {
 	err      error
 }
 
-func (m *model) Next() {
+func (m *Model) Next() {
 	if m.focus == done {
 		m.focus = todo
 	} else {
@@ -26,7 +26,7 @@ func (m *model) Next() {
 	}
 }
 
-func (m *model) Prev() {
+func (m *Model) Prev() {
 	if m.focus == todo {
 		m.focus = done
 	} else {
@@ -34,14 +34,14 @@ func (m *model) Prev() {
 	}
 }
 
-func newModel() model {
-	m := model{focus: todo, loaded: false}
+func newModel() Model {
+	m := Model{focus: todo, loaded: false}
 	return m
 }
 
-func (m *model) initLists(width, height int) {
+func (m *Model) initLists(width, height int) {
 	// init list model
-	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height/divisor)
+	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height-divisor*2)
 	defaultList.SetShowHelp(false)
 	m.lists = []list.Model{defaultList, defaultList, defaultList}
 	// add list items
@@ -61,11 +61,11 @@ func (m *model) initLists(width, height int) {
 	m.lists[done].Title = "Done"
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	// TODO: check if this is where they put custom messages in other examples
@@ -105,7 +105,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) MoveToNext() tea.Msg {
+func (m *Model) MoveToNext() tea.Msg {
 	selectedItem := m.lists[m.focus].SelectedItem()
 	selectedTask := selectedItem.(Task)
 	m.lists[selectedTask.status].RemoveItem(m.lists[m.focus].Index())
@@ -114,31 +114,36 @@ func (m *model) MoveToNext() tea.Msg {
 	return nil
 }
 
-func (m model) View() string {
+func (m Model) View() string {
+	var cols []string
 	if m.err != nil {
 		return m.err.Error()
 	}
 	if m.loaded {
+		todoView := m.lists[todo].View()
+		inProgView := m.lists[inProgress].View()
+		doneView := m.lists[done].View()
 		switch m.focus {
 		case inProgress:
-			return lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				columnStyle.Render(m.lists[todo].View()),
-				focusedStyle.Render(m.lists[inProgress].View()),
-				columnStyle.Render(m.lists[done].View())) + "\n"
+			cols = []string{
+				columnStyle.Render(todoView),
+				focusedStyle.Render(inProgView),
+				columnStyle.Render(doneView),
+			}
 		case done:
-			return lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				columnStyle.Render(m.lists[todo].View()),
-				columnStyle.Render(m.lists[inProgress].View()),
-				focusedStyle.Render(m.lists[done].View())) + "\n"
+			cols = []string{
+				columnStyle.Render(todoView),
+				columnStyle.Render(inProgView),
+				focusedStyle.Render(doneView),
+			}
 		default:
-			return lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				focusedStyle.Render(m.lists[todo].View()),
-				columnStyle.Render(m.lists[inProgress].View()),
-				columnStyle.Render(m.lists[done].View())) + "\n"
+			cols = []string{
+				focusedStyle.Render(todoView),
+				columnStyle.Render(inProgView),
+				columnStyle.Render(doneView),
+			}
 		}
+		return lipgloss.JoinHorizontal(lipgloss.Left, cols...)
 	} else {
 		return "Loading..."
 	}
