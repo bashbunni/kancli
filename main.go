@@ -22,7 +22,7 @@ import (
 
 type (
 	status uint
-	page int
+	page   int
 )
 
 const (
@@ -41,7 +41,7 @@ const (
 )
 
 var (
-	models []tea.Model
+	models      []tea.Model
 	columnStyle = lipgloss.NewStyle().
 			Padding(1, 2)
 

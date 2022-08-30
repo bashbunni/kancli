@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bashbunni/kancli/constants"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/bashbunni/kancli/constants"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type form struct {
-	status status
-	title textinput.Model
+	status      status
+	title       textinput.Model
 	description textarea.Model
 }
 
@@ -32,7 +32,7 @@ func (m form) Init() tea.Cmd {
 func (m form) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-		case tea.KeyMsg:
+	case tea.KeyMsg:
 		if key.Matches(msg, constants.QuitKeys) {
 			return m, tea.Quit
 		}
@@ -77,4 +77,3 @@ func (m form) helpMenu() string {
 func (m form) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, m.title.View(), m.description.View(), m.helpMenu())
 }
-

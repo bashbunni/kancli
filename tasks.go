@@ -39,7 +39,7 @@ func newModel() model {
 	return m
 }
 
-func (m *model) initLists(width, height int) tea.Msg {
+func (m *model) initLists(width, height int) {
 	// init list model
 	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height/divisor)
 	defaultList.SetShowHelp(false)
@@ -56,7 +56,6 @@ func (m *model) initLists(width, height int) tea.Msg {
 	m.lists[done].SetItems([]list.Item{
 		Task{status: done, title: "stay cool", description: "as a cucumber"},
 	})
-	return nil
 }
 
 func (m model) Init() tea.Cmd {
@@ -79,22 +78,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		}
-			switch msg.String() {
-			case "right":
-				m.Next()
-			case "left":
-				m.Prev()
-			case "enter":
-				return m, m.MoveToNext
-			case "n":
-				// save state of current model before switching models
-				models[tasks] = m
-				return models[input].Update(nil)
-			}
+		switch msg.String() {
+		case "right":
+			m.Next()
+		case "left":
+			m.Prev()
+		case "enter":
+			return m, m.MoveToNext
+		case "n":
+			// save state of current model before switching models
+			models[tasks] = m
+			return models[input].Update(nil)
+		}
 	case constants.ErrMsg:
 		m.err = msg
 	case Task:
-		task := Task(msg)
+		task := msg
 		log.Print(m.lists)
 		return m, m.lists[task.status].InsertItem(len(m.lists[task.status].Items()), task)
 	}
@@ -120,26 +119,24 @@ func (m model) View() string {
 		switch m.focus {
 		case inProgress:
 			return lipgloss.JoinHorizontal(
-				lipgloss.Left, 
-				columnStyle.Render(m.lists[todo].View()), 
-				focusedStyle.Render(m.lists[inProgress].View()), 
+				lipgloss.Left,
+				columnStyle.Render(m.lists[todo].View()),
+				focusedStyle.Render(m.lists[inProgress].View()),
 				columnStyle.Render(m.lists[done].View())) + "\n"
 		case done:
 			return lipgloss.JoinHorizontal(
-				lipgloss.Left, 
-				columnStyle.Render(m.lists[todo].View()), 
-				columnStyle.Render(m.lists[inProgress].View()), 
+				lipgloss.Left,
+				columnStyle.Render(m.lists[todo].View()),
+				columnStyle.Render(m.lists[inProgress].View()),
 				focusedStyle.Render(m.lists[done].View())) + "\n"
 		default:
 			return lipgloss.JoinHorizontal(
-				lipgloss.Left, 
-				focusedStyle.Render(m.lists[todo].View()), 
-				columnStyle.Render(m.lists[inProgress].View()), 
+				lipgloss.Left,
+				focusedStyle.Render(m.lists[todo].View()),
+				columnStyle.Render(m.lists[inProgress].View()),
 				columnStyle.Render(m.lists[done].View())) + "\n"
 		}
 	} else {
 		return "Loading..."
 	}
 }
-
-
