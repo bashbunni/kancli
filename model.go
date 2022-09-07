@@ -15,7 +15,6 @@ type Model struct {
 	loaded   bool
 	lists    []list.Model
 	quitting bool
-	err      error
 }
 
 func (m *Model) Next() {
@@ -91,13 +90,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "n":
 			// save state of current model before switching models
 			models[tasks] = m
+			models[input] = newForm(m.focus)
 			return models[input].Update(nil)
+			// Note: I don't need a list of models, I can just return a new
+			// form model each time, but I'm keeping it in this case so you can
+			// see what it looks like with a list of models }
 		}
-	case constants.ErrMsg:
-		m.err = msg
 	case Task:
 		task := msg
-		log.Print(m.lists)
+		log.Println(task.status)
 		return m, m.lists[task.status].InsertItem(len(m.lists[task.status].Items()), task)
 	}
 	currList, cmd := m.lists[m.focus].Update(msg)
@@ -116,8 +117,8 @@ func (m *Model) MoveToNext() tea.Msg {
 
 func (m Model) View() string {
 	var cols []string
-	if m.err != nil {
-		return m.err.Error()
+	if m.quitting {
+		return ""
 	}
 	if m.loaded {
 		todoView := m.lists[todo].View()
