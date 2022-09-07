@@ -3,7 +3,7 @@ module github.com/bashbunni/kancli
 go 1.18
 
 require (
-	github.com/charmbracelet/bubbles v0.13.0
+	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/charmbracelet/lipgloss v0.5.0
 )
